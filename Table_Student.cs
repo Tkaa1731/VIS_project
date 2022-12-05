@@ -5,11 +5,30 @@ using System.Text;
 
 namespace Project_VIS.Database
 {
-    public class Table_Teacher : Table_PARENT
+    public class Table_Student : Table_PARENT
     {
-        public Table_Teacher() : base(Table_TYPE._teacherTable, Table_TYPE._teacherId) { }
+        public Table_Student() : base(Table_TYPE._studentTable, Table_TYPE._studentId) { }
 
-        public int Create(string first_name,string last_name,string email,string password, string offer_text)
+        public DataTable GetStudentsOfTeacher(int teacher_id)
+        {
+            var query = $"SELECT s.* FROM {_tableName} s JOIN Teacher_Student ts ON ts.student_id = s.student_id WHERE ts.teacher_id = {teacher_id};";
+            var result = new DataTable();
+            var connString = DBConnector.GetBuilder().ConnectionString;
+
+            using (SqlConnection connection = new SqlConnection(connString))
+            {
+                connection.Open();
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        result.Load(reader);
+                    }
+                }
+            }
+            return result;
+        }
+        public int Create(string first_name,string last_name,string email,string password)
         {
             SqlConnectionStringBuilder builder = DBConnector.GetBuilder();
             using (var connection = new SqlConnection(builder.ConnectionString))
@@ -17,8 +36,8 @@ namespace Project_VIS.Database
                 connection.Open();
                 var sb = new StringBuilder();
                 sb.Clear();
-                sb.Append($"INSERT INTO {_tableName} (first_name, last_name, email, password, last_visit, offer_active, offer_text)");
-                sb.Append("VALUES (@first_name, @last_name, @email, @password, CURRENT_TIMESTAMP,1, @offer_text);");
+                sb.Append($"INSERT INTO {_tableName} (first_name, last_name, email, password, last_visit)");
+                sb.Append("VALUES (@first_name, @last_name, @email, @password, CURRENT_TIMESTAMP);");
                 sb.Append("SELECT CAST(scope_identity() AS int)");
 
                 string sql = sb.ToString();
@@ -28,7 +47,6 @@ namespace Project_VIS.Database
                     command.Parameters.AddWithValue("@last_name", last_name);
                     command.Parameters.AddWithValue("@email", email);
                     command.Parameters.AddWithValue("@password", password);
-                    command.Parameters.AddWithValue("@offer_text", offer_text);
 
                     object modified = command.ExecuteScalar();
                     return (int)modified;
@@ -36,7 +54,7 @@ namespace Project_VIS.Database
             }
         }
 
-        public bool Update(int id, string first_name, string last_name, bool active, string offer_text)
+        public bool Update(int id, string first_name, string last_name, string email)
         {
             SqlConnectionStringBuilder builder = DBConnector.GetBuilder();
             using (var connection = new SqlConnection(builder.ConnectionString))
@@ -44,7 +62,7 @@ namespace Project_VIS.Database
                 connection.Open();
                 var sb = new StringBuilder();
                 sb.Clear();
-                sb.Append($"UPDATE {_tableName} SET first_name = @first_name, last_name = @last_name, offer_active = @active, offer_text = @offer_text WHERE teacher_id = @id");
+                sb.Append($"UPDATE {_tableName} SET first_name = @first_name, last_name = @last_name, email = @email WHERE student_id = @id");
 
                 string sql = sb.ToString();
                 using (SqlCommand command = new SqlCommand(sql, connection))
@@ -52,8 +70,7 @@ namespace Project_VIS.Database
                     command.Parameters.AddWithValue("@id", id);
                     command.Parameters.AddWithValue("@first_name", first_name);
                     command.Parameters.AddWithValue("@last_name", last_name);
-                    command.Parameters.AddWithValue("@active", active);
-                    command.Parameters.AddWithValue("@offer_text", offer_text);
+                    command.Parameters.AddWithValue("@email", email);
 
                     command.ExecuteNonQuery();
                 }

@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Project_VIS.Domain.TableModule
-{
+{// TABLEMODULE prevadi TableDataGateway na DataTableObject
     public class TeacherTM
     {
         private readonly Table_Teacher _teacherTDG;
@@ -25,7 +25,7 @@ namespace Project_VIS.Domain.TableModule
 
             if (table.Rows.Count == 0)
             {
-                throw new EntityNotFoundExeption();
+                throw new EntityNotFoundExeption("Entity not found");
             }
 
             var row = table.Rows[0];
@@ -40,9 +40,11 @@ namespace Project_VIS.Domain.TableModule
             };
         }
 
-        public IEnumerable<TeacherDTO> GetAll()
+        public IEnumerable<TeacherDTO> GetAll(string where)
         {
-            var table = _teacherTDG.GetAll();
+            var table = _teacherTDG.GetAll(where);
+            if(table.Rows.Count == 0)
+                throw new EntityNotFoundExeption("Entity not found");
             List<TeacherDTO> result = new();
 
             foreach (DataRow row in table.Rows)
@@ -62,14 +64,14 @@ namespace Project_VIS.Domain.TableModule
             return result;
         }
 
-        public int Create(string first_name, string last_name, string email, string password)// update
+        public int Create(string first_name, string last_name, string email, string password, string offer_text)
         {
-            return _teacherTDG.Create(first_name, last_name,email,password);
+            return _teacherTDG.Create(first_name, last_name,email,password, offer_text);
         }
 
-        public bool Update(int id, string first_name, string last_name, string email, bool active)// update 
+        public bool Update(TeacherDTO person)
         {
-            return _teacherTDG.Update(id, first_name, last_name, email ,active);
+            return _teacherTDG.Update(person.Id, person.First_Name, person.Last_Name, person.Active, person.Offer_Text);
         }
 
         public bool Delete(int id)
